@@ -322,6 +322,9 @@ ruleTester.run('no-new-styled-component-in-react-methods', rule, {
       parserOptions: parserOptions,
       errors: [{
         message: ERROR_MESSAGE
+      },
+      {
+        message: ERROR_MESSAGE
       }]
     },
     {
