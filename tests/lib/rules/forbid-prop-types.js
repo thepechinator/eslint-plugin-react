@@ -11,10 +11,9 @@ const rule = require('../../../lib/rules/forbid-prop-types');
 const RuleTester = require('eslint').RuleTester;
 
 const parserOptions = {
-  ecmaVersion: 8,
+  ecmaVersion: 2018,
   sourceType: 'module',
   ecmaFeatures: {
-    experimentalObjectRestSpread: true,
     jsx: true
   }
 };
@@ -180,7 +179,7 @@ ruleTester.run('forbid-prop-types', rule, {
   }, {
     // Proptypes declared with a spread property
     code: [
-      'class Test extends react.component {',
+      'class Test extends React.component {',
       '  static propTypes = {',
       '    intl: React.propTypes.number,',
       '    ...propTypes',
@@ -191,7 +190,7 @@ ruleTester.run('forbid-prop-types', rule, {
   }, {
     // Proptypes declared with a spread property
     code: [
-      'class Test extends react.component {',
+      'class Test extends React.component {',
       '  static get propTypes() {',
       '    return {',
       '      intl: React.propTypes.number,',
@@ -352,7 +351,7 @@ ruleTester.run('forbid-prop-types', rule, {
   }, {
     // Proptypes declared with a spread property
     code: [
-      'class Test extends react.component {',
+      'class Test extends React.component {',
       '  static childContextTypes = {',
       '    intl: React.childContextTypes.number,',
       '    ...childContextTypes',
@@ -364,7 +363,7 @@ ruleTester.run('forbid-prop-types', rule, {
   }, {
     // Proptypes declared with a spread property
     code: [
-      'class Test extends react.component {',
+      'class Test extends React.component {',
       '  static get childContextTypes() {',
       '    return {',
       '      intl: React.childContextTypes.number,',
@@ -526,7 +525,7 @@ ruleTester.run('forbid-prop-types', rule, {
   }, {
     // Proptypes declared with a spread property
     code: [
-      'class Test extends react.component {',
+      'class Test extends React.component {',
       '  static childContextTypes = {',
       '    intl: React.childContextTypes.number,',
       '    ...childContextTypes',
@@ -538,7 +537,7 @@ ruleTester.run('forbid-prop-types', rule, {
   }, {
     // Proptypes declared with a spread property
     code: [
-      'class Test extends react.component {',
+      'class Test extends React.component {',
       '  static get childContextTypes() {',
       '    return {',
       '      intl: React.childContextTypes.number,',
@@ -548,6 +547,28 @@ ruleTester.run('forbid-prop-types', rule, {
       '}'
     ].join('\n'),
     options: [{checkChildContextTypes: true}]
+  }, {
+    code: [
+      'class TestComponent extends React.Component {',
+      '  static defaultProps = function () {',
+      '    const date = new Date();',
+      '    return {',
+      '      date',
+      '    };',
+      '  }();',
+      '}'
+    ].join('\n'),
+    parser: 'babel-eslint'
+  }, {
+    code: [
+      'class HeroTeaserList extends React.Component {',
+      '  render() { return null; }',
+      '}',
+      'HeroTeaserList.propTypes = Object.assign({',
+      '  heroIndex: PropTypes.number,',
+      '  preview: PropTypes.bool,',
+      '}, componentApi, teaserListProps);'
+    ].join('\n')
   }],
 
   invalid: [{

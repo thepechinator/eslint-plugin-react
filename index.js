@@ -36,6 +36,8 @@ const allRules = {
   'jsx-no-undef': require('./lib/rules/jsx-no-undef'),
   'jsx-curly-brace-presence': require('./lib/rules/jsx-curly-brace-presence'),
   'jsx-pascal-case': require('./lib/rules/jsx-pascal-case'),
+  'jsx-fragments': require('./lib/rules/jsx-fragments'),
+  'jsx-props-no-multi-spaces': require('./lib/rules/jsx-props-no-multi-spaces'),
   'jsx-sort-default-props': require('./lib/rules/jsx-sort-default-props'),
   'jsx-sort-props': require('./lib/rules/jsx-sort-props'),
   'jsx-space-before-closing': require('./lib/rules/jsx-space-before-closing'),
@@ -64,10 +66,12 @@ const allRules = {
   'no-typos': require('./lib/rules/no-typos'),
   'no-unescaped-entities': require('./lib/rules/no-unescaped-entities'),
   'no-unknown-property': require('./lib/rules/no-unknown-property'),
+  'no-unsafe': require('./lib/rules/no-unsafe'),
   'no-unused-prop-types': require('./lib/rules/no-unused-prop-types'),
   'no-unused-state': require('./lib/rules/no-unused-state'),
   'no-will-update-set-state': require('./lib/rules/no-will-update-set-state'),
   'prefer-es6-class': require('./lib/rules/prefer-es6-class'),
+  'prefer-read-only-props': require('./lib/rules/prefer-read-only-props'),
   'prefer-stateless-function': require('./lib/rules/prefer-stateless-function'),
   'prop-types': require('./lib/rules/prop-types'),
   'react-in-jsx-scope': require('./lib/rules/react-in-jsx-scope'),
@@ -77,6 +81,7 @@ const allRules = {
   'self-closing-comp': require('./lib/rules/self-closing-comp'),
   'sort-comp': require('./lib/rules/sort-comp'),
   'sort-prop-types': require('./lib/rules/sort-prop-types'),
+  'state-in-constructor': require('./lib/rules/state-in-constructor'),
   'style-prop-object': require('./lib/rules/style-prop-object'),
   'void-dom-elements-no-children': require('./lib/rules/void-dom-elements-no-children')
 };
@@ -139,6 +144,7 @@ module.exports = {
         'react/no-string-refs': 2,
         'react/no-unescaped-entities': 2,
         'react/no-unknown-property': 2,
+        'react/no-unsafe': 0,
         'react/prop-types': 2,
         'react/react-in-jsx-scope': 2,
         'react/require-render-return': 2

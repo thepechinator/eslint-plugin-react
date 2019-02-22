@@ -12,15 +12,12 @@ const rule = require('../../../lib/rules/no-string-refs');
 const RuleTester = require('eslint').RuleTester;
 
 const parserOptions = {
-  ecmaVersion: 8,
+  ecmaVersion: 2018,
   sourceType: 'module',
   ecmaFeatures: {
-    experimentalObjectRestSpread: true,
     jsx: true
   }
 };
-
-require('babel-eslint');
 
 // ------------------------------------------------------------------------------
 // Tests
@@ -40,6 +37,26 @@ ruleTester.run('no-refs', rule, {
         }
       });
     `,
+    parser: 'babel-eslint'
+  },
+  {
+    code: [
+      'var Hello = createReactClass({',
+      '  render: function() {',
+      '    return <div ref={`hello`}>Hello {this.props.name}</div>;',
+      '  }',
+      '});'
+    ].join('\n'),
+    parser: 'babel-eslint'
+  },
+  {
+    code: [
+      'var Hello = createReactClass({',
+      '  render: function() {',
+      '    return <div ref={`hello${index}`}>Hello {this.props.name}</div>;',
+      '  }',
+      '});'
+    ].join('\n'),
     parser: 'babel-eslint'
   }
   ],
@@ -95,6 +112,44 @@ ruleTester.run('no-refs', rule, {
       });
     `,
     parser: 'babel-eslint',
+    errors: [{
+      message: 'Using this.refs is deprecated.'
+    }, {
+      message: 'Using string literals in ref attributes is deprecated.'
+    }]
+  },
+  {
+    code: [
+      'var Hello = createReactClass({',
+      '  componentDidMount: function() {',
+      '  var component = this.refs.hello;',
+      '  },',
+      '  render: function() {',
+      '    return <div ref={`hello`}>Hello {this.props.name}</div>;',
+      '  }',
+      '});'
+    ].join('\n'),
+    parser: 'babel-eslint',
+    options: [{noTemplateLiterals: true}],
+    errors: [{
+      message: 'Using this.refs is deprecated.'
+    }, {
+      message: 'Using string literals in ref attributes is deprecated.'
+    }]
+  },
+  {
+    code: [
+      'var Hello = createReactClass({',
+      '  componentDidMount: function() {',
+      '  var component = this.refs.hello;',
+      '  },',
+      '  render: function() {',
+      '    return <div ref={`hello${index}`}>Hello {this.props.name}</div>;',
+      '  }',
+      '});'
+    ].join('\n'),
+    parser: 'babel-eslint',
+    options: [{noTemplateLiterals: true}],
     errors: [{
       message: 'Using this.refs is deprecated.'
     }, {

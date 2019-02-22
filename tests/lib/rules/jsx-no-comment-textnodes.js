@@ -12,10 +12,9 @@ const rule = require('../../../lib/rules/jsx-no-comment-textnodes');
 const RuleTester = require('eslint').RuleTester;
 
 const parserOptions = {
-  ecmaVersion: 8,
+  ecmaVersion: 2018,
   sourceType: 'module',
   ecmaFeatures: {
-    experimentalObjectRestSpread: true,
     jsx: true
   }
 };
@@ -36,6 +35,19 @@ ruleTester.run('jsx-no-comment-textnodes', rule, {
             <div>
               {/* valid */}
             </div>
+          );
+        }
+      }
+    `,
+      parser: 'babel-eslint'
+    }, {
+      code: `
+      class Comp1 extends Component {
+        render() {
+          return (
+            <>
+              {/* valid */}
+            </>
           );
         }
       }
@@ -128,6 +140,18 @@ ruleTester.run('jsx-no-comment-textnodes', rule, {
     },
     {
       code: `
+      </* valid */></>
+    `,
+      parser: 'babel-eslint'
+    },
+    {
+      code: `
+      <></* valid *//>
+    `,
+      parser: 'babel-eslint'
+    },
+    {
+      code: `
       <Foo title={'foo' /* valid */}/>
     `,
       parser: 'babel-eslint'
@@ -154,6 +178,16 @@ ruleTester.run('jsx-no-comment-textnodes', rule, {
       class Comp1 extends Component {
         render() {
           return (<div>// invalid</div>);
+        }
+      }
+    `,
+      parser: 'babel-eslint',
+      errors: [{message: 'Comments inside children section of tag should be placed inside braces'}]
+    }, {
+      code: `
+      class Comp1 extends Component {
+        render() {
+          return (<>// invalid</>);
         }
       }
     `,

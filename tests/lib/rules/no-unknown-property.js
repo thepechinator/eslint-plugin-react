@@ -13,10 +13,9 @@ const rule = require('../../../lib/rules/no-unknown-property');
 const RuleTester = require('eslint').RuleTester;
 
 const parserOptions = {
-  ecmaVersion: 8,
+  ecmaVersion: 2018,
   sourceType: 'module',
   ecmaFeatures: {
-    experimentalObjectRestSpread: true,
     jsx: true
   }
 };
@@ -31,6 +30,8 @@ ruleTester.run('no-unknown-property', rule, {
     {code: '<App class="bar" />;'},
     {code: '<App for="bar" />;'},
     {code: '<App accept-charset="bar" />;'},
+    {code: '<meta charset="utf-8" />;'},
+    {code: '<meta charSet="utf-8" />;'},
     {code: '<App http-equiv="bar" />;'},
     {code: '<App xlink:href="bar" />;'},
     {code: '<App clip-path="bar" />;'},

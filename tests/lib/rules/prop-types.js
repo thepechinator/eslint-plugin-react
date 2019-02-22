@@ -12,10 +12,9 @@ const rule = require('../../../lib/rules/prop-types');
 const RuleTester = require('eslint').RuleTester;
 
 const parserOptions = {
-  ecmaVersion: 8,
+  ecmaVersion: 2018,
   sourceType: 'module',
   ecmaFeatures: {
-    experimentalObjectRestSpread: true,
     jsx: true
   }
 };
@@ -25,8 +24,6 @@ const settings = {
     pragma: 'Foo'
   }
 };
-
-require('babel-eslint');
 
 // ------------------------------------------------------------------------------
 // Tests
@@ -344,6 +341,51 @@ ruleTester.run('prop-types', rule, {
         '};'
       ].join('\n')
     }, {
+      code: `
+        class Component extends React.Component {
+          render() {
+            return <div>{this.props.foo.baz}</div>;
+          }
+        }
+        Component.propTypes = {
+          foo: PropTypes.oneOfType([
+            PropTypes.shape({
+              bar: PropTypes.string
+            }),
+            PropTypes.shape({
+              baz: PropTypes.string
+            })
+          ])
+        };
+      `
+    }, {
+      code: `
+        class Component extends React.Component {
+          render() {
+            return <div>{this.props.foo.baz}</div>;
+          }
+        }
+        Component.propTypes = {
+          foo: PropTypes.oneOfType([
+            PropTypes.shape({
+              bar: PropTypes.string
+            }),
+            PropTypes.instanceOf(Baz)
+          ])
+        };
+      `
+    }, {
+      code: `
+        class Component extends React.Component {
+          render() {
+            return <div>{this.props.foo.baz}</div>;
+          }
+        }
+        Component.propTypes = {
+          foo: PropTypes.oneOf(['bar', 'baz'])
+        };
+      `
+    }, {
       code: [
         'class Hello extends React.Component {',
         '  render() {',
@@ -481,6 +523,20 @@ ruleTester.run('prop-types', rule, {
       parser: 'babel-eslint'
     }, {
       code: [
+        'const foo = {};',
+        'class Hello extends React.Component {',
+        '  render() {',
+        '    const {firstname, lastname} = this.props.name;',
+        '    return <div>{firstname} {lastname}</div>;',
+        '  }',
+        '}',
+        'Hello.propTypes = {',
+        '  name: PropTypes.shape(foo)',
+        '};'
+      ].join('\n'),
+      parser: 'babel-eslint'
+    }, {
+      code: [
         'class Hello extends React.Component {',
         '  render() {',
         '    let {firstname} = this;',
@@ -585,6 +641,46 @@ ruleTester.run('prop-types', rule, {
         'Comp2.propTypes = {',
         '  prop2: PropTypes.arrayOf(Comp1.propTypes.prop1)',
         '};'
+      ].join('\n'),
+      parser: 'babel-eslint'
+    }, {
+      code: [
+        'class Comp1 extends Component {',
+        '  render() {',
+        '    return <span />;',
+        '  }',
+        '}',
+        'Comp1.propTypes = {',
+        '  prop1: PropTypes.number',
+        '};',
+        'class Comp2 extends Component {',
+        '  static propTypes = {',
+        '    prop2: PropTypes.arrayOf(Comp1.propTypes.prop1)',
+        '  }',
+        '  render() {',
+        '    return <span />;',
+        '  }',
+        '}'
+      ].join('\n'),
+      parser: 'babel-eslint'
+    }, {
+      code: [
+        'class Comp1 extends Component {',
+        '  render() {',
+        '    return <span />;',
+        '  }',
+        '}',
+        'Comp1.propTypes = {',
+        '  prop1: PropTypes.number',
+        '};',
+        'var Comp2 = createReactClass({',
+        '  propTypes: {',
+        '    prop2: PropTypes.arrayOf(Comp1.propTypes.prop1)',
+        '  },',
+        '  render() {',
+        '    return <span />;',
+        '  }',
+        '});'
       ].join('\n'),
       parser: 'babel-eslint'
     }, {
@@ -904,6 +1000,14 @@ ruleTester.run('prop-types', rule, {
       parser: 'babel-eslint'
     }, {
       code: [
+        'type Props = {\'data-action\': string};',
+        'function Button({ \'data-action\': dataAction }: Props) {',
+        '  return <div data-action={dataAction} />;',
+        '}'
+      ].join('\n'),
+      parser: 'babel-eslint'
+    }, {
+      code: [
         'import type Props from "fake";',
         'class Hello extends React.Component {',
         '  props: Props;',
@@ -1161,6 +1265,20 @@ ruleTester.run('prop-types', rule, {
         '  options: Array<SelectOption>',
         '} & FieldProps'
       ].join('\n'),
+      parser: 'babel-eslint'
+    }, {
+      // Impossible intersection type
+      code: `
+        import React from 'react';
+        type Props = string & {
+          fullname: string
+        };
+        class Test extends React.PureComponent<Props> {
+          render() {
+            return <div>Hello {this.props.fullname}</div>
+          }
+        }
+      `,
       parser: 'babel-eslint'
     }, {
       code: [
@@ -1873,6 +1991,318 @@ ruleTester.run('prop-types', rule, {
       };
     `,
       parser: 'babel-eslint'
+    },
+    {
+      code: `
+      // @flow
+      import * as React from 'react'
+
+      type Props = {}
+
+      const func = <OP: *>(arg) => arg
+
+      const hoc = <OP>() => () => {
+        class Inner extends React.Component<Props & OP> {
+          render() {
+            return <div />
+          }
+        }
+      }
+    `,
+      parser: 'babel-eslint'
+    },
+    {
+      code: `
+        const Slider = props => (
+          <RcSlider {...props} />
+        );
+
+        Slider.propTypes = RcSlider.propTypes;
+      `
+    },
+    {
+      code: `
+        const Slider = props => (
+          <RcSlider foo={props.bar} />
+        );
+
+        Slider.propTypes = RcSlider.propTypes;
+      `
+    },
+    {
+      code: `
+        class Foo extends React.Component {
+          bar() {
+            this.setState((state, props) => ({ current: props.current }));
+          }
+          render() {
+            return <div />;
+          }
+        }
+
+        Foo.propTypes = {
+          current: PropTypes.number.isRequired,
+        };
+      `
+    },
+    {
+      code: `
+        class Foo extends React.Component {
+          static getDerivedStateFromProps(props) {
+            const { foo } = props;
+            return {
+              foobar: foo
+            };
+          }
+
+          render() {
+            const { foobar } = this.state;
+            return <div>{foobar}</div>;
+          }
+        }
+
+        Foo.propTypes = {
+          foo: PropTypes.func.isRequired,
+        };
+      `,
+      settings: {react: {version: '16.3.0'}}
+    },
+    {
+      code: `
+        const HeaderBalance = React.memo(({ cryptoCurrency }) => (
+          <div className="header-balance">
+            <div className="header-balance__balance">
+              BTC
+              {cryptoCurrency}
+            </div>
+          </div>
+        ));
+        HeaderBalance.propTypes = {
+          cryptoCurrency: PropTypes.string
+        };
+      `
+    },
+    {
+      code: `
+        import React, { memo } from 'react';
+        const HeaderBalance = memo(({ cryptoCurrency }) => (
+          <div className="header-balance">
+            <div className="header-balance__balance">
+              BTC
+              {cryptoCurrency}
+            </div>
+          </div>
+        ));
+        HeaderBalance.propTypes = {
+          cryptoCurrency: PropTypes.string
+        };
+      `
+    },
+    {
+      code: `
+        import Foo, { memo } from 'foo';
+        const HeaderBalance = memo(({ cryptoCurrency }) => (
+          <div className="header-balance">
+            <div className="header-balance__balance">
+              BTC
+              {cryptoCurrency}
+            </div>
+          </div>
+        ));
+        HeaderBalance.propTypes = {
+          cryptoCurrency: PropTypes.string
+        };
+      `,
+      settings: {
+        react: {
+          pragma: 'Foo'
+        }
+      }
+    },
+    {
+      code: `
+        const Label = React.forwardRef(({ text }, ref) => {
+          return <div ref={ref}>{text}</div>;
+        });
+        Label.propTypes = {
+          text: PropTypes.string,
+        };
+      `
+    },
+    {
+      code: `
+        const Label = Foo.forwardRef(({ text }, ref) => {
+          return <div ref={ref}>{text}</div>;
+        });
+        Label.propTypes = {
+          text: PropTypes.string,
+        };
+      `,
+      settings: {
+        react: {
+          pragma: 'Foo'
+        }
+      }
+    },
+    {
+      code: `
+        import React, { forwardRef } from 'react';
+        const Label = forwardRef(({ text }, ref) => {
+          return <div ref={ref}>{text}</div>;
+        });
+        Label.propTypes = {
+          text: PropTypes.string,
+        };
+      `
+    },
+    {
+      code: `
+        import Foo, { forwardRef } from 'foo';
+        const Label = forwardRef(({ text }, ref) => {
+          return <div ref={ref}>{text}</div>;
+        });
+        Label.propTypes = {
+          text: PropTypes.string,
+        };
+      `,
+      settings: {
+        react: {
+          pragma: 'Foo'
+        }
+      }
+    },
+    {
+      code: `
+      class Foo extends React.Component {
+        propTypes = {
+          actions: PropTypes.object.isRequired,
+        };
+        componentWillReceiveProps (nextProps) {
+          this.props.actions.doSomething();
+        }
+
+        componentWillUnmount () {
+          this.props.actions.doSomething();
+        }
+
+        render() {
+          return <div>foo</div>;
+        }
+      }
+      `,
+      parser: 'babel-eslint'
+    },
+    {
+      code: `
+      class Foo extends React.Component {
+        componentDidUpdate() { this.inputRef.focus(); }
+        render() {
+          return (
+            <div>
+              <input ref={(node) => { this.inputRef = node; }} />
+            </div>
+          )
+        }
+      }
+      `
+    },
+    {
+      code: `
+        class Foo extends React.Component {
+          componentDidUpdate(nextProps, nextState) {
+            const {
+                first_organization,
+                second_organization,
+            } = this.state;
+            return true;
+          }
+          render() {
+            return <div>hi</div>;
+          }
+        }
+      `
+    },
+    {
+      code: `
+      class Foo extends React.Component {
+        shouldComponentUpdate(nextProps) {
+          if (this.props.search !== nextProps.search) {
+            let query = nextProps.query;
+            let result = nextProps.list.filter(item => {
+              return (item.name.toLowerCase().includes(query.trim().toLowerCase()));
+            });
+
+            this.setState({ result });
+
+            return true;
+          }
+        }
+        render() {
+          return <div>foo</div>;
+        }
+      }
+      Foo.propTypes = {
+        search: PropTypes.object,
+        list: PropTypes.array,
+        query: PropTypes.string,
+      };
+      `
+    },
+    {
+      code: [
+        'export default class LazyLoader extends Component {',
+        '  static propTypes = {',
+        '    children: PropTypes.node,',
+        '    load: PropTypes.any,',
+        '  };',
+        '  state = { mod: null };',
+        '  shouldComponentUpdate(prevProps) {',
+        '    assert(prevProps.load === this.props.load);',
+        '    return true;',
+        '  }',
+        '  load() {',
+        '    this.props.load(mod => {',
+        '      this.setState({',
+        '        mod: mod.default ? mod.default : mod',
+        '      });',
+        '    });',
+        '  }',
+        '  render() {',
+        '    if (this.state.mod !== null) {',
+        '      return this.props.children(this.state.mod);',
+        '    }',
+        '    this.load();',
+        '    return null;',
+        '  }',
+        '}'
+      ].join('\n'),
+      parser: 'babel-eslint'
+    }, {
+      code: `
+        import React from 'react';
+        import PropTypes from 'prop-types';
+        import {connect} from 'react-redux';
+
+        class Foo extends React.Component {
+          render() {
+            return this.props.children;
+          }
+        }
+
+        Foo.propTypes = {
+          children: PropTypes.element.isRequired
+        };
+
+        export const Unconnected = Foo;
+        export default connect(Foo);
+      `
+    }, {
+      code: `
+        const a = {};
+        function fn1() {}
+        const b = a::fn1();
+      `,
+      parser: 'babel-eslint'
     }
   ],
 
@@ -1937,6 +2367,58 @@ ruleTester.run('prop-types', rule, {
         line: 3,
         column: 35,
         type: 'Identifier'
+      }]
+    }, {
+      code: [
+        'class Hello extends React.Component {',
+        '  render() {',
+        '    const { name, ...rest } = this.props',
+        '    return <div>Hello</div>;',
+        '  }',
+        '}'
+      ].join('\n'),
+      errors: [{
+        message: '\'name\' is missing in props validation',
+        line: 3,
+        column: 13,
+        type: 'Property'
+      }]
+    }, {
+      code: [
+        'class Hello extends React.Component {',
+        '  render() {',
+        '    const { name, title, ...rest } = this.props',
+        '    return <div>Hello</div>;',
+        '  }',
+        '}',
+        'Hello.propTypes = {',
+        '  name: PropTypes.string',
+        '}'
+      ].join('\n'),
+      errors: [{
+        message: '\'title\' is missing in props validation',
+        line: 3,
+        column: 19,
+        type: 'Property'
+      }]
+    }, {
+      code: [
+        'class Hello extends React.Component {',
+        '   renderStuff() {',
+        '    const { name, ...rest } = this.props',
+        '    return (<div {...rest}>{name}</div>);',
+        '  }',
+        '  render() {',
+        '    this.renderStuff()',
+        '  }',
+        '}',
+        'Hello.propTypes = {}'
+      ].join('\n'),
+      errors: [{
+        message: '\'name\' is missing in props validation',
+        line: 3,
+        column: 13,
+        type: 'Property'
       }]
     }, {
       code: [
@@ -2067,6 +2549,22 @@ ruleTester.run('prop-types', rule, {
         '    })',
         '  })',
         '};'
+      ].join('\n'),
+      errors: [{
+        message: '\'a.b.c\' is missing in props validation'
+      }]
+    }, {
+      code: [
+        'class Hello extends React.Component {',
+        '  render() {',
+        '    this.props.a.b.c;',
+        '    return <div>Hello</div>;',
+        '  }',
+        '}',
+        'Hello.propTypes = {',
+        '  a: PropTypes.shape({})',
+        '};',
+        'Hello.propTypes.a.b = PropTypes.shape({});'
       ].join('\n'),
       errors: [{
         message: '\'a.b.c\' is missing in props validation'
@@ -3628,6 +4126,322 @@ ruleTester.run('prop-types', rule, {
         message: '\'fooBar\' is missing in props validation'
       }],
       parser: 'babel-eslint'
+    },
+    {
+      code: `
+      type ReduxState = {bar: number};
+
+      const mapStateToProps = (state: ReduxState) => ({
+          foo: state.bar,
+      });
+      // utility to extract the return type from a function
+      type ExtractReturn_<R, Fn: (...args: any[]) => R> = R;
+      type ExtractReturn<T> = ExtractReturn_<*, T>;
+
+      type PropsFromRedux = ExtractReturn<typeof mapStateToProps>;
+
+      type OwnProps = {
+          baz: string,
+      }
+
+      // I want my Props to be {baz: string, foo: number}
+      type Props = PropsFromRedux & OwnProps;
+
+      const Component = (props: Props) => (
+        <div>
+            {props.baz}
+            {props.bad}
+        </div>
+      );
+    `,
+      errors: [{
+        message: '\'bad\' is missing in props validation'
+      }],
+      parser: 'babel-eslint'
+    },
+    {
+      code: `
+        class Component extends React.Component {
+          render() {
+            return <div>{this.props.foo.baz}</div>;
+          }
+        }
+        Component.propTypes = {
+          foo: PropTypes.oneOfType([
+            PropTypes.shape({
+              bar: PropTypes.string
+            })
+          ])
+        };
+      `,
+      errors: [{
+        message: '\'foo.baz\' is missing in props validation'
+      }]
+    },
+    {
+      code: `
+        class Foo extends React.Component {
+          bar() {
+            this.setState((state, props) => ({ current: props.current, bar: props.bar }));
+          }
+          render() {
+            return <div />;
+          }
+        }
+
+        Foo.propTypes = {
+          current: PropTypes.number.isRequired,
+        };
+      `,
+      errors: [{
+        message: '\'bar\' is missing in props validation'
+      }]
+    },
+    {
+      code: `
+        class Foo extends React.Component {
+          static getDerivedStateFromProps(props) {
+            const { foo, bar } = props;
+            return {
+              foobar: foo + bar
+            };
+          }
+
+          render() {
+            const { foobar } = this.state;
+            return <div>{foobar}</div>;
+          }
+        }
+
+        Foo.propTypes = {
+          foo: PropTypes.func.isRequired,
+        };
+      `,
+      settings: {react: {version: '16.3.0'}},
+      errors: [{
+        message: '\'bar\' is missing in props validation'
+      }]
+    },
+    {
+      code: `
+        const ForAttendees = ({ page }) => (
+          <>
+            <section>{page}</section>
+          </>
+        );
+
+        export default ForAttendees;
+      `,
+      parser: 'babel-eslint',
+      errors: [{
+        message: '\'page\' is missing in props validation'
+      }]
+    },
+    {
+      code: `
+        const HeaderBalance = React.memo(({ cryptoCurrency }) => (
+          <div className="header-balance">
+            <div className="header-balance__balance">
+              BTC
+              {cryptoCurrency}
+            </div>
+          </div>
+        ));
+      `,
+      errors: [{
+        message: '\'cryptoCurrency\' is missing in props validation'
+      }]
+    },
+    {
+      code: `
+        import React, { memo } from 'react';
+        const HeaderBalance = memo(({ cryptoCurrency }) => (
+          <div className="header-balance">
+            <div className="header-balance__balance">
+              BTC
+              {cryptoCurrency}
+            </div>
+          </div>
+        ));
+      `,
+      errors: [{
+        message: '\'cryptoCurrency\' is missing in props validation'
+      }]
+    },
+    {
+      code: `
+        const HeaderBalance = Foo.memo(({ cryptoCurrency }) => (
+          <div className="header-balance">
+            <div className="header-balance__balance">
+              BTC
+              {cryptoCurrency}
+            </div>
+          </div>
+        ));
+      `,
+      settings: {
+        react: {
+          pragma: 'Foo'
+        }
+      },
+      errors: [{
+        message: '\'cryptoCurrency\' is missing in props validation'
+      }]
+    },
+    {
+      code: `
+        import Foo, { memo } from 'foo';
+        const HeaderBalance = memo(({ cryptoCurrency }) => (
+          <div className="header-balance">
+            <div className="header-balance__balance">
+              BTC
+              {cryptoCurrency}
+            </div>
+          </div>
+        ));
+      `,
+      settings: {
+        react: {
+          pragma: 'Foo'
+        }
+      },
+      errors: [{
+        message: '\'cryptoCurrency\' is missing in props validation'
+      }]
+    },
+    {
+      code: `
+        const Label = React.forwardRef(({ text }, ref) => {
+          return <div ref={ref}>{text}</div>;
+        });
+      `,
+      errors: [{
+        message: '\'text\' is missing in props validation'
+      }]
+    },
+    {
+      code: `
+        import React, { forwardRef } from 'react';
+        const Label = forwardRef(({ text }, ref) => {
+          return <div ref={ref}>{text}</div>;
+        });
+      `,
+      errors: [{
+        message: '\'text\' is missing in props validation'
+      }]
+    },
+    {
+      code: `
+        const Label = Foo.forwardRef(({ text }, ref) => {
+          return <div ref={ref}>{text}</div>;
+        });
+      `,
+      settings: {
+        react: {
+          pragma: 'Foo'
+        }
+      },
+      errors: [{
+        message: '\'text\' is missing in props validation'
+      }]
+    },
+    {
+      code: `
+        import Foo, { forwardRef } from 'foo';
+        const Label = forwardRef(({ text }, ref) => {
+          return <div ref={ref}>{text}</div>;
+        });
+      `,
+      settings: {
+        react: {
+          pragma: 'Foo'
+        }
+      },
+      errors: [{
+        message: '\'text\' is missing in props validation'
+      }]
+    }, {
+      code: `
+        import PropTypes from 'prop-types';
+        import React from 'react';
+
+        const MyComponent = (props) => {
+          switch (props.usedProp) {
+            case 1:
+              return (<div />);
+            default:
+              return <div />;
+          }
+        };
+
+        export default MyComponent;
+      `,
+      errors: [{
+        message: '\'usedProp\' is missing in props validation'
+      }]
+    },
+    {
+      code: `
+        export default class Controller extends React.Component {
+          handleAdd = id => {
+            this.setState((state, { name }) => {
+                const item = this.buildItem(id);
+            });
+          };
+        }
+      `,
+      parser: 'babel-eslint',
+      errors: [{
+        message: '\'name\' is missing in props validation'
+      }]
+    },
+    {
+      code: `
+        export default class extends React.Component {
+          onSubmit = () => {
+            this.setState((state, { a }) => {
+              a.b.c();
+              return null;
+            });
+          };
+
+          render() {
+            return null;
+          }
+        }
+      `,
+      parser: 'babel-eslint',
+      errors: [{
+        message: '\'a\' is missing in props validation'
+      }]
+    },
+    {
+      code: `
+        class Foo extends React.Component {
+          contructor(props) {
+            super(props);
+            this.initialValues = {
+              test: '',
+            };
+          }
+
+          render = () => {
+            return (
+              <Component
+                initialValues={this.props.initialValues || this.initialValues}
+              >
+                {formikProps => (
+                  <Input {...formikProps} />
+                )}
+              </Component>
+            );
+          }
+        }
+      `,
+      parser: 'babel-eslint',
+      errors: [{
+        message: '\'initialValues\' is missing in props validation'
+      }]
     }
   ]
 });

@@ -11,7 +11,7 @@ const rule = require('../../../lib/rules/no-typos');
 const RuleTester = require('eslint').RuleTester;
 
 const parserOptions = {
-  ecmaVersion: 6,
+  ecmaVersion: 2018,
   ecmaFeatures: {
     jsx: true
   },
@@ -23,6 +23,7 @@ const parserOptions = {
 // -----------------------------------------------------------------------------
 
 const ERROR_MESSAGE = 'Typo in static class property declaration';
+const ERROR_MESSAGE_ES5 = 'Typo in property declaration';
 const ERROR_MESSAGE_LIFECYCLE_METHOD = 'Typo in component lifecycle method declaration';
 
 const ruleTester = new RuleTester();
@@ -239,15 +240,6 @@ ruleTester.run('no-typos', rule, {
         ComponentwillUnmount() { }
         Render() { }
       }
-    `,
-    parserOptions: parserOptions
-  }, {
-    // PropTypes declared on a component that is detected through JSDoc comments and is
-    // declared AFTER the PropTypes assignment does not work.
-    code: `
-      MyComponent.PROPTYPES = {}
-      /** @extends React.Component */
-      class MyComponent extends BaseComponent {}
     `,
     parserOptions: parserOptions
   }, {
@@ -528,6 +520,119 @@ ruleTester.run('no-typos', rule, {
    `,
     parser: 'babel-eslint',
     parserOptions: parserOptions
+  }, {
+    code: `
+      import React from 'react';
+      import PropTypes from 'prop-types';
+      const Component = React.createReactClass({
+        propTypes: {
+          a: PropTypes.string.isRequired,
+          b: PropTypes.shape({
+            c: PropTypes.number
+          }).isRequired
+        }
+      });
+    `,
+    parserOptions: parserOptions
+  }, {
+    code: `
+      import React from 'react';
+      import PropTypes from 'prop-types';
+      const Component = React.createReactClass({
+        propTypes: {
+          a: PropTypes.string.isRequired,
+          b: PropTypes.shape({
+            c: PropTypes.number
+          }).isRequired
+        }
+      });
+    `,
+    parser: 'babel-eslint',
+    parserOptions: parserOptions
+  }, {
+    code: `
+      import React from 'react';
+      import PropTypes from 'prop-types';
+      const Component = React.createReactClass({
+        childContextTypes: {
+          a: PropTypes.bool,
+          b: PropTypes.array,
+          c: PropTypes.func,
+          d: PropTypes.object,
+        }
+      });
+    `,
+    parserOptions: parserOptions
+  }, {
+    code: `
+      import React from 'react';
+      import PropTypes from 'prop-types';
+      const Component = React.createReactClass({
+        childContextTypes: {
+          a: PropTypes.bool,
+          b: PropTypes.array,
+          c: PropTypes.func,
+          d: PropTypes.object,
+        }
+      });
+    `,
+    parser: 'babel-eslint',
+    parserOptions: parserOptions
+  }, {
+    code: `
+      import React from 'react';
+      const Component = React.createReactClass({
+        propTypes: {},
+        childContextTypes: {},
+        contextTypes: {},
+        componentWillMount() { },
+        componentDidMount() { },
+        componentWillReceiveProps() { },
+        shouldComponentUpdate() { },
+        componentWillUpdate() { },
+        componentDidUpdate() { },
+        componentWillUnmount() { },
+        render() {
+          return <div>Hello {this.props.name}</div>;
+        }
+      });
+    `,
+    parserOptions: parserOptions
+  }, {
+    code: `
+      import React from 'react';
+      const Component = React.createReactClass({
+        propTypes: {},
+        childContextTypes: {},
+        contextTypes: {},
+        componentWillMount() { },
+        componentDidMount() { },
+        componentWillReceiveProps() { },
+        shouldComponentUpdate() { },
+        componentWillUpdate() { },
+        componentDidUpdate() { },
+        componentWillUnmount() { },
+        render() {
+          return <div>Hello {this.props.name}</div>;
+        }
+      });
+    `,
+    parser: 'babel-eslint',
+    parserOptions: parserOptions
+  }, {
+    code: `
+      import { string, element } from "prop-types";
+
+      class Sample extends React.Component {
+         render() { return null; }
+      }
+
+      Sample.propTypes = {
+        title: string.isRequired,
+        body: element.isRequired
+      };
+    `,
+    parserOptions: parserOptions
   }],
 
   invalid: [{
@@ -732,12 +837,18 @@ ruleTester.run('no-typos', rule, {
   }, {
     code: `
       class Hello extends React.Component {
+        static GetDerivedStateFromProps()  { }
         ComponentWillMount() { }
+        UNSAFE_ComponentWillMount() { }
         ComponentDidMount() { }
         ComponentWillReceiveProps() { }
+        UNSAFE_ComponentWillReceiveProps() { }
         ShouldComponentUpdate() { }
         ComponentWillUpdate() { }
+        UNSAFE_ComponentWillUpdate() { }
+        GetSnapshotBeforeUpdate() { }
         ComponentDidUpdate() { }
+        ComponentDidCatch() { }
         ComponentWillUnmount() { }
         render() {
           return <div>Hello {this.props.name}</div>;
@@ -766,16 +877,40 @@ ruleTester.run('no-typos', rule, {
     }, {
       message: ERROR_MESSAGE_LIFECYCLE_METHOD,
       type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
     }]
   }, {
     code: `
       class Hello extends React.Component {
+        static Getderivedstatefromprops() { }
         Componentwillmount() { }
+        UNSAFE_Componentwillmount() { }
         Componentdidmount() { }
         Componentwillreceiveprops() { }
+        UNSAFE_Componentwillreceiveprops() { }
         Shouldcomponentupdate() { }
         Componentwillupdate() { }
+        UNSAFE_Componentwillupdate() { }
+        Getsnapshotbeforeupdate() { }
         Componentdidupdate() { }
+        Componentdidcatch() { }
         Componentwillunmount() { }
         Render() {
           return <div>Hello {this.props.name}</div>;
@@ -807,16 +942,40 @@ ruleTester.run('no-typos', rule, {
     }, {
       message: ERROR_MESSAGE_LIFECYCLE_METHOD,
       type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
     }]
   }, {
     code: `
       class Hello extends React.Component {
+        static getderivedstatefromprops() { }
         componentwillmount() { }
+        unsafe_componentwillmount() { }
         componentdidmount() { }
         componentwillreceiveprops() { }
+        unsafe_componentwillreceiveprops() { }
         shouldcomponentupdate() { }
         componentwillupdate() { }
+        unsafe_componentwillupdate() { }
+        getsnapshotbeforeupdate() { }
         componentdidupdate() { }
+        componentdidcatch() { }
         componentwillunmount() { }
         render() {
           return <div>Hello {this.props.name}</div>;
@@ -825,6 +984,24 @@ ruleTester.run('no-typos', rule, {
     `,
     parserOptions: parserOptions,
     errors: [{
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'MethodDefinition'
+    }, {
       message: ERROR_MESSAGE_LIFECYCLE_METHOD,
       type: 'MethodDefinition'
     }, {
@@ -854,7 +1031,6 @@ ruleTester.run('no-typos', rule, {
           a: PropTypes.Number.isRequired
       }
     `,
-    parser: 'babel-eslint',
     parserOptions: parserOptions,
     errors: [{
       message: 'Typo in declared prop type: Number'
@@ -867,10 +1043,37 @@ ruleTester.run('no-typos', rule, {
           a: PropTypes.number.isrequired
       }
     `,
+    parserOptions: parserOptions,
+    errors: [{
+      message: 'Typo in prop type chain qualifier: isrequired'
+    }]
+  }, {
+    code: `
+      import PropTypes from "prop-types";
+      class Component extends React.Component {
+        static propTypes = {
+          a: PropTypes.number.isrequired
+        }
+      };
+    `,
     parser: 'babel-eslint',
     parserOptions: parserOptions,
     errors: [{
       message: 'Typo in prop type chain qualifier: isrequired'
+    }]
+  }, {
+    code: `
+      import PropTypes from "prop-types";
+      class Component extends React.Component {
+        static propTypes = {
+          a: PropTypes.Number
+        }
+      };
+    `,
+    parser: 'babel-eslint',
+    parserOptions: parserOptions,
+    errors: [{
+      message: 'Typo in declared prop type: Number'
     }]
   }, {
     code: `
@@ -1100,6 +1303,14 @@ ruleTester.run('no-typos', rule, {
     }]
   }, {
     code: `
+     import 'react';
+     class Component extends React.Component {};
+   `,
+    parser: 'babel-eslint',
+    parserOptions: parserOptions,
+    errors: []
+  }, {
+    code: `
       import { PropTypes } from 'react';
       class Component extends React.Component {};
       Component.childContextTypes = {
@@ -1272,15 +1483,11 @@ ruleTester.run('no-typos', rule, {
     }, {
       message: 'Typo in declared prop type: objectof'
     }]
-  }]
-/*
-// createClass tests below fail, so they're commented out
-// ---------
   }, {
     code: `
       import React from 'react';
       import PropTypes from 'prop-types';
-      const Component = React.createClass({
+      const Component = React.createReactClass({
         propTypes: {
           a: PropTypes.string.isrequired,
           b: PropTypes.shape({
@@ -1300,7 +1507,7 @@ ruleTester.run('no-typos', rule, {
     code: `
       import React from 'react';
       import PropTypes from 'prop-types';
-      const Component = React.createClass({
+      const Component = React.createReactClass({
         childContextTypes: {
           a: PropTypes.bools,
           b: PropTypes.Array,
@@ -1324,7 +1531,7 @@ ruleTester.run('no-typos', rule, {
     code: `
       import React from 'react';
       import PropTypes from 'prop-types';
-      const Component = React.createClass({
+      const Component = React.createReactClass({
         propTypes: {
           a: PropTypes.string.isrequired,
           b: PropTypes.shape({
@@ -1343,7 +1550,7 @@ ruleTester.run('no-typos', rule, {
     code: `
       import React from 'react';
       import PropTypes from 'prop-types';
-      const Component = React.createClass({
+      const Component = React.createReactClass({
         childContextTypes: {
           a: PropTypes.bools,
           b: PropTypes.Array,
@@ -1362,8 +1569,121 @@ ruleTester.run('no-typos', rule, {
     }, {
       message: 'Typo in declared prop type: objectof'
     }]
+  }, {
+    code: `
+      import React from 'react';
+      const Component = React.createReactClass({
+        proptypes: {},
+        childcontexttypes: {},
+        contexttypes: {},
+        ComponentWillMount() { },
+        ComponentDidMount() { },
+        ComponentWillReceiveProps() { },
+        ShouldComponentUpdate() { },
+        ComponentWillUpdate() { },
+        ComponentDidUpdate() { },
+        ComponentWillUnmount() { },
+        render() {
+          return <div>Hello {this.props.name}</div>;
+        }
+      });
+    `,
+    parserOptions: parserOptions,
+    errors: [{
+      message: ERROR_MESSAGE_ES5,
+      type: 'ObjectExpression'
+    }, {
+      message: ERROR_MESSAGE_ES5,
+      type: 'ObjectExpression'
+    }, {
+      message: ERROR_MESSAGE_ES5,
+      type: 'ObjectExpression'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'Property'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'Property'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'Property'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'Property'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'Property'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'Property'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'Property'
+    }]
+  }, {
+    code: `
+      import React from 'react';
+      const Component = React.createReactClass({
+        proptypes: {},
+        childcontexttypes: {},
+        contexttypes: {},
+        ComponentWillMount() { },
+        ComponentDidMount() { },
+        ComponentWillReceiveProps() { },
+        ShouldComponentUpdate() { },
+        ComponentWillUpdate() { },
+        ComponentDidUpdate() { },
+        ComponentWillUnmount() { },
+        render() {
+          return <div>Hello {this.props.name}</div>;
+        }
+      });
+    `,
+    parser: 'babel-eslint',
+    parserOptions: parserOptions,
+    errors: [{
+      message: ERROR_MESSAGE_ES5,
+      type: 'ObjectExpression'
+    }, {
+      message: ERROR_MESSAGE_ES5,
+      type: 'ObjectExpression'
+    }, {
+      message: ERROR_MESSAGE_ES5,
+      type: 'ObjectExpression'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'Property'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'Property'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'Property'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'Property'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'Property'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'Property'
+    }, {
+      message: ERROR_MESSAGE_LIFECYCLE_METHOD,
+      type: 'Property'
+    }]
+    /*
+    // PropTypes declared on a component that is detected through JSDoc comments and is
+    // declared AFTER the PropTypes assignment
+    // Commented out since it only works with ESLint 5.
+      ,{
+        code: `
+          MyComponent.PROPTYPES = {}
+          \/** @extends React.Component *\/
+          class MyComponent extends BaseComponent {}
+        `,
+        parserOptions: parserOptions
+      },
+    */
   }]
-// ---------
-// createClass tests above fail, so they're commented out
-*/
 });

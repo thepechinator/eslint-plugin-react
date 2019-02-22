@@ -8,10 +8,9 @@ const rule = require('../../../lib/rules/no-unused-state');
 const RuleTester = require('eslint').RuleTester;
 
 const parserOptions = {
-  ecmaVersion: 6,
+  ecmaVersion: 2018,
   ecmaFeatures: {
-    jsx: true,
-    experimentalObjectRestSpread: true
+    jsx: true
   }
 };
 
@@ -491,6 +490,256 @@ eslintTester.run('no-unused-state', rule, {
         }
       }`,
       parser: 'babel-eslint'
+    },
+    {
+      code: `class GetDerivedStateFromPropsTest extends Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            id: 123,
+          };
+        }
+        static getDerivedStateFromProps(nextProps, otherState) {
+          if (otherState.id === nextProps.id) {
+            return {
+              selected: true,
+            };
+          }
+          return null;
+        }
+        render() {
+          return (
+            <h1>{this.state.selected ? 'Selected' : 'Not selected'}</h1>
+          );
+        }
+      }`,
+      parser: 'babel-eslint'
+    },
+    {
+      code: `class ComponentDidUpdateTest extends Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            id: 123,
+          };
+        }
+
+        componentDidUpdate(someProps, someState) {
+          if (someState.id === someProps.id) {
+            doStuff();
+          }
+        }
+        render() {
+          return (
+            <h1>{this.state.selected ? 'Selected' : 'Not selected'}</h1>
+          );
+        }
+      }`,
+      parser: 'babel-eslint'
+    },
+    {
+      code: `class ShouldComponentUpdateTest extends Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            id: 123,
+          };
+        }
+        shouldComponentUpdate(nextProps, nextState) {
+          return nextState.id === nextProps.id;
+        }
+        render() {
+          return (
+            <h1>{this.state.selected ? 'Selected' : 'Not selected'}</h1>
+          );
+        }
+      }`,
+      parser: 'babel-eslint'
+    },
+    {
+      code: `class NestedScopesTest extends Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            id: 123,
+          };
+        }
+        shouldComponentUpdate(nextProps, nextState) {
+          return (function() {
+            return nextState.id === nextProps.id;
+          })();
+        }
+        render() {
+          return (
+            <h1>{this.state.selected ? 'Selected' : 'Not selected'}</h1>
+          );
+        }
+      }`,
+      parser: 'babel-eslint'
+    }, {
+      code: `
+      class Foo extends Component {
+        state = {
+          initial: 'foo',
+        }
+        handleChange = () => {
+          this.setState(state => ({
+            current: state.initial
+          }));
+        }
+        render() {
+          const { current } = this.state;
+          return <div>{current}</div>
+        }
+      }
+      `,
+      parser: 'babel-eslint'
+    }, {
+      code: `
+      class Foo extends Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            initial: 'foo',
+          }
+        }
+        handleChange = () => {
+          this.setState(state => ({
+            current: state.initial
+          }));
+        }
+        render() {
+          const { current } = this.state;
+          return <div>{current}</div>
+        }
+      }
+      `,
+      parser: 'babel-eslint'
+    }, {
+      code: `
+      class Foo extends Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            initial: 'foo',
+          }
+        }
+        handleChange = () => {
+          this.setState((state, props) => ({
+            current: state.initial
+          }));
+        }
+        render() {
+          const { current } = this.state;
+          return <div>{current}</div>
+        }
+      }
+      `,
+      parser: 'babel-eslint'
+    }, {
+      code: `
+      var Foo = createReactClass({
+        getInitialState: function() {
+          return { initial: 'foo' };
+        },
+        handleChange: function() {
+          this.setState(state => ({
+            current: state.initial
+          }));
+        },
+        render() {
+          const { current } = this.state;
+          return <div>{current}</div>
+        }
+      });
+      `
+    }, {
+      code: `
+      var Foo = createReactClass({
+        getInitialState: function() {
+          return { initial: 'foo' };
+        },
+        handleChange: function() {
+          this.setState((state, props) => ({
+            current: state.initial
+          }));
+        },
+        render() {
+          const { current } = this.state;
+          return <div>{current}</div>
+        }
+      });
+      `
+    }, {
+      code: `
+      class SetStateDestructuringCallback extends Component {
+        state = {
+            used: 1, unused: 2
+        }
+        handleChange = () => {
+          this.setState(({unused}) => ({
+            used: unused * unused,
+          }));
+        }
+        render() {
+          return <div>{this.state.used}</div>
+        }
+      }
+      `,
+      parser: 'babel-eslint'
+    },
+    {
+      code: `
+      class SetStateCallbackStateCondition extends Component {
+        state = {
+            isUsed: true,
+            foo: 'foo'
+        }
+        handleChange = () => {
+          this.setState((prevState) => (prevState.isUsed ? {foo: 'bar', isUsed: false} : {}));
+        }
+        render() {
+          return <SomeComponent foo={this.state.foo} />;
+        }
+      }
+      `,
+      parser: 'babel-eslint'
+    }, {
+      // Don't error out
+      code: `
+      class Foo extends Component {
+        handleChange = function() {
+          this.setState(() => ({ foo: value }));
+        }
+        render() {
+          return <SomeComponent foo={this.state.foo} />;
+        }
+      }`,
+      parser: 'babel-eslint'
+    }, {
+      // Don't error out
+      code: `
+      class Foo extends Component {
+        handleChange = function() {
+          this.setState(state => ({ foo: value }));
+        }
+        render() {
+          return <SomeComponent foo={this.state.foo} />;
+        }
+      }`,
+      parser: 'babel-eslint'
+    }, {
+      // Don't error out
+      code: `
+      class Foo extends Component {
+        static handleChange = () => {
+          this.setState(state => ({ foo: value }));
+        }
+        render() {
+          return <SomeComponent foo={this.state.foo} />;
+        }
+      }`,
+      parser: 'babel-eslint'
     }
   ],
 
@@ -782,6 +1031,72 @@ eslintTester.run('no-unused-state', rule, {
         }`,
       errors: getErrorMessages(['bar']),
       parser: 'babel-eslint'
+    },
+    {
+      code: `class FakePrevStateVariableTest extends Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            id: 123,
+            foo: 456
+          };
+        }
+
+        componentDidUpdate(someProps, someState) {
+          if (someState.id === someProps.id) {
+            const prevState = { foo: 789 };
+            console.log(prevState.foo);
+          }
+        }
+        render() {
+          return (
+            <h1>{this.state.selected ? 'Selected' : 'Not selected'}</h1>
+          );
+        }
+      }`,
+      errors: getErrorMessages(['foo']),
+      parser: 'babel-eslint'
+    },
+    {
+      code: `class MissingStateParameterTest extends Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            id: 123
+          };
+        }
+
+        componentDidUpdate(someProps) {
+          const prevState = { id: 456 };
+          console.log(prevState.id);
+        }
+        render() {
+          return (
+            <h1>{this.state.selected ? 'Selected' : 'Not selected'}</h1>
+          );
+        }
+      }`,
+      errors: getErrorMessages(['id']),
+      parser: 'babel-eslint'
+    }, {
+      code: `
+      class Foo extends Component {
+        state = {
+          initial: 'foo',
+        }
+        handleChange = () => {
+          this.setState(() => ({
+            current: 'hi'
+          }));
+        }
+        render() {
+          const { current } = this.state;
+          return <div>{current}</div>
+        }
+      }
+      `,
+      parser: 'babel-eslint',
+      errors: getErrorMessages(['initial'])
     }
   ]
 });

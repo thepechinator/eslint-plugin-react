@@ -17,10 +17,9 @@ const rule = require('../../../lib/rules/no-this-in-sfc');
 const RuleTester = require('eslint').RuleTester;
 
 const parserOptions = {
-  ecmaVersion: 8,
+  ecmaVersion: 2018,
   sourceType: 'module',
   ecmaFeatures: {
-    experimentalObjectRestSpread: true,
     jsx: true
   }
 };
@@ -100,6 +99,44 @@ ruleTester.run('no-this-in-sfc', rule, {
     code: 'const Foo = (props) => props.foo ? <span>{props.bar}</span> : null;'
   }, {
     code: 'const Foo = ({ foo, bar }) => foo ? <span>{bar}</span> : null;'
+  }, {
+    code: `
+    class Foo {
+      bar() { 
+        () => {
+          this.something();
+          return null;
+        };
+      }
+    }`
+  }, {
+    code: `
+    class Foo {
+      bar() { 
+        () => () => {
+          this.something();
+          return null;
+        };
+      }
+    }`
+  }, {
+    code: `
+    class Foo {
+      bar = () => {
+        this.something();
+        return null;
+      };
+    }`,
+    parser: 'babel-eslint'
+  }, {
+    code: `
+    class Foo {
+      bar = () => () => {
+        this.something();
+        return null;
+      };
+    }`,
+    parser: 'babel-eslint'
   }],
   invalid: [{
     code: `
@@ -166,5 +203,25 @@ ruleTester.run('no-this-in-sfc', rule, {
       return <div onClick={onClick}>{this.props.foo}</div>;
     }`,
     errors: [{message: ERROR_MESSAGE}, {message: ERROR_MESSAGE}]
+  }, {
+    code: `
+    () => {
+      this.something();
+      return null;
+    }`,
+    errors: [{message: ERROR_MESSAGE}]
+  }, {
+    code: `
+    class Foo {
+      bar() { 
+        function Bar(){
+          return () => {
+            this.something();
+            return null;
+          }
+        }
+      }
+    }`,
+    errors: [{message: ERROR_MESSAGE}]
   }]
 });

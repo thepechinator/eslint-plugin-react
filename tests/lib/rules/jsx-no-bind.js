@@ -13,10 +13,9 @@ const rule = require('../../../lib/rules/jsx-no-bind');
 const RuleTester = require('eslint').RuleTester;
 
 const parserOptions = {
-  ecmaVersion: 8,
+  ecmaVersion: 2018,
   sourceType: 'module',
   ecmaFeatures: {
-    experimentalObjectRestSpread: true,
     jsx: true
   }
 };
@@ -269,6 +268,25 @@ ruleTester.run('jsx-no-bind', rule, {
         '  }',
         '}'
       ].join('\n')
+    },
+
+    // ignore DOM components
+    {
+      code: '<div onClick={this._handleClick.bind(this)}></div>',
+      options: [{ignoreDOMComponents: true}]
+    },
+    {
+      code: '<div onClick={() => alert("1337")}></div>',
+      options: [{ignoreDOMComponents: true}]
+    },
+    {
+      code: '<div onClick={function () { alert("1337") }}></div>',
+      options: [{ignoreDOMComponents: true}]
+    },
+    {
+      code: '<div foo={::this.onChange} />',
+      options: [{ignoreDOMComponents: true}],
+      parser: 'babel-eslint'
     }
   ],
 
@@ -773,6 +791,13 @@ ruleTester.run('jsx-no-bind', rule, {
       ].join('\n'),
       errors: [{message: 'JSX props should not use ::'}],
       parser: 'babel-eslint'
+    },
+
+    // ignore DOM components
+    {
+      code: '<Foo onClick={this._handleClick.bind(this)} />',
+      options: [{ignoreDOMComponents: true}],
+      errors: [{message: 'JSX props should not use .bind()'}]
     }
   ]
 });

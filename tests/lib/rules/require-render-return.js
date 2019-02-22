@@ -12,15 +12,12 @@ const rule = require('../../../lib/rules/require-render-return');
 const RuleTester = require('eslint').RuleTester;
 
 const parserOptions = {
-  ecmaVersion: 8,
+  ecmaVersion: 2018,
   sourceType: 'module',
   ecmaFeatures: {
-    experimentalObjectRestSpread: true,
     jsx: true
   }
 };
-
-require('babel-eslint');
 
 // ------------------------------------------------------------------------------
 // Tests
@@ -156,7 +153,7 @@ ruleTester.run('require-render-return', rule, {
     // Missing return in ES6 class
     code: `
       class Hello extends React.Component {
-        render() {} 
+        render() {}
       }
     `,
     errors: [{
@@ -170,7 +167,7 @@ ruleTester.run('require-render-return', rule, {
           const names = this.props.names.map(function(name) {
             return <div>{name}</div>
           });
-        } 
+        }
       }
     `,
     errors: [{

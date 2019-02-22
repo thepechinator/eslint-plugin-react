@@ -12,10 +12,9 @@
 const rule = require('../../../lib/rules/jsx-curly-spacing');
 const RuleTester = require('eslint').RuleTester;
 const parserOptions = {
-  ecmaVersion: 8,
+  ecmaVersion: 2018,
   sourceType: 'module',
   ecmaFeatures: {
-    experimentalObjectRestSpread: true,
     jsx: true
   }
 };
@@ -678,6 +677,9 @@ ruleTester.run('jsx-curly-spacing', rule, {
       '`}</App>'
     ].join('\n'),
     options: [{children: {when: 'never', allowMultiline: false}}]
+  }, {
+    code: '<>{bar} {baz}</>;',
+    parser: 'babel-eslint'
   }],
 
   invalid: [{
@@ -733,6 +735,16 @@ ruleTester.run('jsx-curly-spacing', rule, {
   }, {
     code: '<App>{ bar }</App>;',
     output: '<App>{bar}</App>;',
+    options: [{children: true}],
+    errors: [{
+      message: 'There should be no space after \'{\''
+    }, {
+      message: 'There should be no space before \'}\''
+    }]
+  }, {
+    code: '<>{ bar }</>;',
+    output: '<>{bar}</>;',
+    parser: 'babel-eslint',
     options: [{children: true}],
     errors: [{
       message: 'There should be no space after \'{\''
@@ -2255,6 +2267,19 @@ ruleTester.run('jsx-curly-spacing', rule, {
       message: 'A space is required after \'{\''
     }, {
       message: 'A space is required before \'}\''
+    }]
+  }, {
+    code: [
+      '<div className={ this.state.renderInfo ? "infoPanel col-xs-12" : "unToggled col-xs-12" } />'
+    ].join('\n'),
+    output: [
+      '<div className={this.state.renderInfo ? "infoPanel col-xs-12" : "unToggled col-xs-12"} />'
+    ].join('\n'),
+    options: ['never', {allowMultiline: true}],
+    errors: [{
+      message: 'There should be no space after \'{\''
+    }, {
+      message: 'There should be no space before \'}\''
     }]
   }]
 });

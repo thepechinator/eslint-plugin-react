@@ -11,13 +11,10 @@
 const rule = require('../../../lib/rules/boolean-prop-naming');
 const RuleTester = require('eslint').RuleTester;
 
-require('babel-eslint');
-
 const parserOptions = {
-  ecmaVersion: 6,
+  ecmaVersion: 2018,
   sourceType: 'module',
   ecmaFeatures: {
-    experimentalObjectRestSpread: true,
     jsx: true
   }
 };
@@ -348,6 +345,34 @@ ruleTester.run('boolean-prop-naming', rule, {
         hasValue: PropTypes.bool.isRequired
       }
     `
+  }, {
+    // Ensure the rule does not throw when a shape prop isRequired.
+    code: `
+      var Hello = createReactClass({
+        propTypes: {something: PropTypes.shape({}).isRequired},
+        render: function() { return <div />; }
+      });
+    `,
+    options: [{
+      rule: '^is[A-Z]([A-Za-z0-9]?)+'
+    }]
+  }, {
+    // inline Flow type
+    code: `
+      function SomeComponent({
+          isSomething,
+      }: {
+          isSomething: boolean,
+      }) {
+          return (
+              <span>{isSomething}</span>
+          );
+      }
+    `,
+    options: [{
+      rule: '^is[A-Z]([A-Za-z0-9]?)+'
+    }],
+    parser: 'babel-eslint'
   }],
 
   invalid: [{
@@ -759,6 +784,26 @@ ruleTester.run('boolean-prop-naming', rule, {
     options: [{
       rule: '^is[A-Z]([A-Za-z0-9]?)+'
     }],
+    errors: [{
+      message: 'Prop name (something) doesn\'t match rule (^is[A-Z]([A-Za-z0-9]?)+)'
+    }]
+  }, {
+    // inline Flow type
+    code: `
+      function SomeComponent({
+          something,
+      }: {
+          something: boolean,
+      }) {
+          return (
+              <span>{something}</span>
+          );
+      }
+    `,
+    options: [{
+      rule: '^is[A-Z]([A-Za-z0-9]?)+'
+    }],
+    parser: 'babel-eslint',
     errors: [{
       message: 'Prop name (something) doesn\'t match rule (^is[A-Z]([A-Za-z0-9]?)+)'
     }]

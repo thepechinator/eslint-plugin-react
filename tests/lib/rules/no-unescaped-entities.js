@@ -12,10 +12,9 @@ const rule = require('../../../lib/rules/no-unescaped-entities');
 const RuleTester = require('eslint').RuleTester;
 
 const parserOptions = {
-  ecmaVersion: 8,
+  ecmaVersion: 2018,
   sourceType: 'module',
   ecmaFeatures: {
-    experimentalObjectRestSpread: true,
     jsx: true
   }
 };
@@ -72,6 +71,35 @@ ruleTester.run('no-unescaped-entities', rule, {
           },
         });
       `
+    },
+    {
+      code: `
+        var Hello = createReactClass({
+          render: function() {
+            return <>Here is some text!</>;
+          }
+        });
+      `,
+      parser: 'babel-eslint'
+    }, {
+      code: `
+        var Hello = createReactClass({
+          render: function() {
+            return <>I&rsquo;ve escaped some entities: &gt; &lt; &amp;</>;
+          }
+        });
+      `,
+      parser: 'babel-eslint'
+    },
+    {
+      code: `
+        var Hello = createReactClass({
+          render: function() {
+            return <>{">" + "<" + "&" + '"'}</>;
+          },
+        });
+      `,
+      parser: 'babel-eslint'
     }
   ],
 
@@ -84,7 +112,17 @@ ruleTester.run('no-unescaped-entities', rule, {
           }
         });
       `,
-      errors: [{message: 'HTML entities must be escaped.'}]
+      errors: [{message: '`>` can be escaped with `&gt;`.'}]
+    }, {
+      code: `
+        var Hello = createReactClass({
+          render: function() {
+            return <>></>;
+          }
+        });
+      `,
+      parser: 'babel-eslint',
+      errors: [{message: '`>` can be escaped with `&gt;`.'}]
     }, {
       code: `
         var Hello = createReactClass({
@@ -95,7 +133,19 @@ ruleTester.run('no-unescaped-entities', rule, {
           }
         });
       `,
-      errors: [{message: 'HTML entities must be escaped.'}]
+      errors: [{message: '`>` can be escaped with `&gt;`.'}]
+    }, {
+      code: `
+        var Hello = createReactClass({
+          render: function() {
+            return <>first line is ok
+            so is second
+            and here are some bad entities: ></>
+          }
+        });
+      `,
+      parser: 'babel-eslint',
+      errors: [{message: '`>` can be escaped with `&gt;`.'}]
     }, {
       code: `
         var Hello = createReactClass({
@@ -104,7 +154,7 @@ ruleTester.run('no-unescaped-entities', rule, {
           }
         });
       `,
-      errors: [{message: 'HTML entities must be escaped.'}]
+      errors: [{message: '`\'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.'}]
     }, {
       code: `
         var Hello = createReactClass({
@@ -114,9 +164,9 @@ ruleTester.run('no-unescaped-entities', rule, {
         });
       `,
       errors: [
-        {message: 'HTML entities must be escaped.'},
-        {message: 'HTML entities must be escaped.'},
-        {message: 'HTML entities must be escaped.'}
+        {message: '`\'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.'},
+        {message: '`>` can be escaped with `&gt;`.'},
+        {message: '`>` can be escaped with `&gt;`.'}
       ]
     }, {
       code: `
@@ -126,7 +176,57 @@ ruleTester.run('no-unescaped-entities', rule, {
           }
         });
       `,
-      errors: [{message: 'HTML entities must be escaped.'}]
+      errors: [{message: '`}` can be escaped with `&#125;`.'}]
+    }, {
+      code: `
+        var Hello = createReactClass({
+          render: function() {
+            return <>{"Unbalanced braces"}}</>;
+          }
+        });
+      `,
+      parser: 'babel-eslint',
+      errors: [{message: '`}` can be escaped with `&#125;`.'}]
+    }, {
+      code: `
+        var Hello = createReactClass({
+          render: function() {
+            return <>foo & bar</>;
+          }
+        });
+      `,
+      parser: 'babel-eslint',
+      errors: [{message: 'HTML entity, \`&\` , must be escaped.'}],
+      options: [{
+        forbid: ['&']
+      }]
+    }, {
+      code: `
+        var Hello = createReactClass({
+          render: function() {
+            return <span>foo & bar</span>;
+          }
+        });
+      `,
+      errors: [{message: 'HTML entity, \`&\` , must be escaped.'}],
+      options: [{
+        forbid: ['&']
+      }]
+    }, {
+      code: `
+        var Hello = createReactClass({
+          render: function() {
+            return <span>foo & bar</span>;
+          }
+        });
+      `,
+      errors: [{message: '`&` can be escaped with `&amp;`.'}],
+      options: [{
+        forbid: [{
+          char: '&',
+          alternatives: ['&amp;']
+        }]
+      }]
     }
   ]
 });
